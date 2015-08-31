@@ -1,37 +1,3 @@
-SOCKS 5 Proxy with Go Lang
-=====
-
-Original Library was imported from http://github.com/oov/socks5
-
-I just modified and build for personal use.
-
-this code support configuration loading.
-
-
-
-Original socks5
-======
-
-Package socks5 implements a "SOCKS Protocol Version 5" server.
-
-This server supports a subset of RFC 1928:
-
-* auth methods: "NO AUTHENTICATION REQUIRED", "USERNAME/PASSWORD"
-* commands: "CONNECT"
-* address types: "IP V4 address", "DOMAINNAME", "IP V6 address"
-(but tested "DOMAINNAME" only)
-
-INSTALL
--------
-
-```sh
-go get -u github.com/oov/socks5
-```
-
-USAGE
------
-
-```go
 package main
 
 import (
@@ -68,4 +34,3 @@ func main() {
 
 	srv.ListenAndServe(":12345")
 }
-```

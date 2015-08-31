@@ -1,15 +1,4 @@
-SOCKS 5 Proxy with Go Lang
-=====
-
-Original Library was imported from http://github.com/oov/socks5
-
-I just modified and build for personal use.
-
-this code support configuration loading.
-
-
-
-Original socks5
+socks5
 ======
 
 Package socks5 implements a "SOCKS Protocol Version 5" server.
