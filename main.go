@@ -44,27 +44,32 @@ func main() {
 		return
         }
 
-	
+	// Build pre-compiled pattern matching list	
 	patterns := list.New()
 	for _, pattern := range conf.Pattern {
 		r, _ := regexp.Compile(pattern)
 		patterns.PushBack(r)
 	}
 
+	// Build user list map
+	users := map[string]string{}
+	for _, uid := range conf.UserList {
+		users[uid.User] = uid.Pass
+	}
+
 	srv := socks5.New()
 	srv.AuthUsernamePasswordCallback = func(c *socks5.Conn, username, password []byte) error {
 		user := string(username)
 		pass := string(password)
-		for _, uid := range conf.UserList {
-			if user == uid.User {
-				if pass != uid.Pass {
-					log.Printf("User Refused/Password mismatched: '%v'", user)
-					return socks5.ErrAuthenticationFailed
-				} else {
-					log.Printf("User Connected: '%v'", user)
-					c.Data = user
-					return nil
-				}
+		pwd, ok := users[user]
+		if ok {
+			if pass != pwd {
+				log.Printf("User Refused/Password mismatched: '%v'", user)
+				return socks5.ErrAuthenticationFailed
+			} else {
+				log.Printf("User Connected: '%v'", user)
+				c.Data = user
+				return nil
 			}
 		}
 		log.Printf("User Refused/No such user: '%v'", user)
