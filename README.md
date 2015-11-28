@@ -7,6 +7,8 @@ I just modified and build for personal use.
 
 this code support configuration loading.
 
+* IP mask must be CIDR format like "1.2.3.0/24"
+* If ID/PW is supplied, use that. or IP restrictions
 
 
 Original socks5

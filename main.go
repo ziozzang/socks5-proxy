@@ -2,6 +2,7 @@ package main
 
 import (
 	"./socks5"
+	"net"
 	"container/list"
 	"encoding/json"
 	"io/ioutil"
@@ -18,6 +19,7 @@ type Config struct {
 	Sock5Addr	string `json:"addr"`
 	UserList	[]Users `json:"userlist"`
 	Pattern		[]string `json:"pattern"`
+	IPAllow		[]string `json:"ipallow"`
 }
 
 func (c *Config) String() string {
@@ -57,8 +59,40 @@ func main() {
 		users[uid.User] = uid.Pass
 	}
 
+	// Build IP allow CIDR mask list
+	ipmasks := list.New()
+	for _, cidr := range conf.IPAllow {
+		_, ipsubnet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ipmasks.PushBack(ipsubnet)
+	}
+
 	srv := socks5.New()
+
+	srv.AuthNoAuthenticationRequiredCallback = func(c *socks5.Conn) error {
+		ip, _, err := net.SplitHostPort(c.RemoteAddr())
+		if err != nil {
+			log.Fatal(err)
+		}
+		pip := net.ParseIP(ip)
+
+		for e := ipmasks.Front(); e != nil; e = e.Next() {
+			snet := e.Value.(*net.IPNet)
+			if snet.Contains(pip) {
+				log.Printf("IP OK: '%v'", ip)
+				return nil
+			}
+		}
+		log.Printf("Not allowed IP: '%v'", ip)
+		return socks5.ErrAuthenticationFailed
+	}
+
 	srv.AuthUsernamePasswordCallback = func(c *socks5.Conn, username, password []byte) error {
+		if len(users) == 0 {
+			return socks5.ErrAuthenticationFailed
+		}
 		user := string(username)
 		pass := string(password)
 		pwd, ok := users[user]
