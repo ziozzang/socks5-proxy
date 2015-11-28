@@ -7,9 +7,19 @@ I just modified and build for personal use.
 
 this code support configuration loading.
 
-* IP mask must be CIDR format like "1.2.3.0/24"
+* IP mask must be CIDR format like "1.2.3.0/24". If you want allow all client, use CIDR as "0.0.0.0/0"
 * If ID/PW is supplied, use that. or IP restrictions
 
+Installation
+============
+* if you want to use with windows, use released binary.
+* if you want to use with linux(x86_64), just execute these command in console.
+```
+wget https://github.com/ziozzang/socks5-proxy/releases/download/1.0/socks5-proxy && chmod +x socks5-proxy
+wget https://github.com/ziozzang/socks5-proxy/releases/download/1.0/socks5-proxy.config
+```
+
+* don't forget to edit configuration.
 
 Original socks5
 ======
