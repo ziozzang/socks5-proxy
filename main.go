@@ -19,6 +19,7 @@ type Config struct {
 	Sock5Addr	string `json:"addr"`
 	UserList	[]Users `json:"userlist"`
 	Pattern		[]string `json:"pattern"`
+	BlockPattern	[]string `json:"blockpattern"`
 	IPAllow		[]string `json:"ipallow"`
 }
 
@@ -48,11 +49,19 @@ func main() {
 
 	// Build pre-compiled pattern matching list	
 	patterns := list.New()
-	for _, pattern := range conf.Pattern {
+	for _, pattern := range conf.BlockPattern {
 		r, _ := regexp.Compile(pattern)
 		patterns.PushBack(r)
 	}
 
+	// Build pre-compiled blocking pattern matching list	
+	blockpatterns := list.New()
+	for _, blockpattern := range conf.Pattern {
+		r, _ := regexp.Compile(blockpattern)
+		blockpatterns.PushBack(r)
+	}
+
+	
 	// Build user list map
 	users := map[string]string{}
 	for _, uid := range conf.UserList {
@@ -114,14 +123,20 @@ func main() {
 		for e := patterns.Front(); e != nil; e = e.Next() {
 			pattern := e.Value.(*regexp.Regexp)
 			if pattern.MatchString(host) {
-				return host, socks5.ErrConnectionNotAllowedByRuleset
+				if user, ok := c.Data.(string); ok {
+					log.Printf("%v connecting to %v", user, host)
+				}
+				return host, nil
 			}
 		}
 
-		if user, ok := c.Data.(string); ok {
-			log.Printf("%v connecting to %v", user, host)
+		for e := blockpatterns.Front(); e != nil; e = e.Next() {
+			blockpattern := e.Value.(*regexp.Regexp)
+			if blockpattern.MatchString(host) {
+				return host, socks5.ErrConnectionNotAllowedByRuleset
+			}
 		}
-		return host, nil
+		return host, socks5.ErrConnectionNotAllowedByRuleset
 	})
 
 	srv.HandleCloseFunc(func(c *socks5.Conn) {
