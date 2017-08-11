@@ -49,14 +49,14 @@ func main() {
 
 	// Build pre-compiled pattern matching list	
 	patterns := list.New()
-	for _, pattern := range conf.BlockPattern {
+	for _, pattern := range conf.Pattern {
 		r, _ := regexp.Compile(pattern)
 		patterns.PushBack(r)
 	}
 
 	// Build pre-compiled blocking pattern matching list	
 	blockpatterns := list.New()
-	for _, blockpattern := range conf.Pattern {
+	for _, blockpattern := range conf.BlockPattern {
 		r, _ := regexp.Compile(blockpattern)
 		blockpatterns.PushBack(r)
 	}
@@ -126,6 +126,7 @@ func main() {
 				if user, ok := c.Data.(string); ok {
 					log.Printf("%v connecting to %v", user, host)
 				}
+				log.Printf("Alowed host: %v", host)
 				return host, nil
 			}
 		}
@@ -133,9 +134,11 @@ func main() {
 		for e := blockpatterns.Front(); e != nil; e = e.Next() {
 			blockpattern := e.Value.(*regexp.Regexp)
 			if blockpattern.MatchString(host) {
+				log.Printf("Not Alowed host: %v", host)
 				return host, socks5.ErrConnectionNotAllowedByRuleset
 			}
 		}
+		log.Printf("Not Alowed host(DEFAULT): %v", host)
 		return host, socks5.ErrConnectionNotAllowedByRuleset
 	})
 
