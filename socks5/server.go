@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"math/rand"
+	"strings"
 )
 
 type Server struct {
@@ -165,7 +167,9 @@ func writeCommandErrorReply(c net.Conn, rep byte) error {
 }
 
 func (c *Conn) commandConnect(cmd *cmd) error {
-	var err error
+	var err, err2 error
+        var sz1, sz2 int64
+
 	to := cmd.DestAddress()
 	for _, h := range c.server.connectHandlers {
 		to, err = h.HandleConnect(c, to)
@@ -233,16 +237,64 @@ func (c *Conn) commandConnect(cmd *cmd) error {
 		return err
 	}
 
+        /////////////////////////////////////////////////////////////////////
+        // FROM HERE: SNI Censorship bypass code. :)
+        firstByte := make([]byte, 1)
+        _, error := c.rwc.Read(firstByte)
+        if error != nil {
+            log.Printf("Couldn't read first byte :-(")
+            return nil
+        }
+        w,_ := conn.Write(firstByte)
+        log.Printf("Write: %d", w)
+
+        if firstByte[0] == 0x16 {
+            // OK TLS
+            log.Printf("TLS Detected(HTTPS)")
+
+            // TLS HELO packet devided by Random size. (Tricky code. but works well)
+            rndHdrSz := rand.Intn(100) + 80
+            sniHdr := make([]byte, rndHdrSz)
+            sz1, error := c.rwc.Read(sniHdr)
+            if error != nil {
+                log.Printf("Couldn't read SNI packet :-(")
+                return nil
+            }
+            w,_ := conn.Write(sniHdr)
+            log.Printf("Read: %d / Write: %d (BuffSize:%d)", sz1, w, rndHdrSz)
+
+        } else if  (0x41 <= firstByte[0] && firstByte[0] <= 0x5a) || (0x62 <= firstByte[0] && firstByte[0] <= 0x7a) {
+            // Alphabet started. maybe HTTP?
+            log.Printf("Plain HTTP")
+
+            httpHdr := make([]byte,512)
+            sz1, error := c.rwc.Read(httpHdr)
+            if error != nil {
+                log.Printf("Couldn't read Header :-(")
+                return nil
+            }
+            log.Printf("> READ %d", sz1)
+            idx := strings.Index(strings.ToLower(string(httpHdr)),"host:")
+            w1,_ := conn.Write(httpHdr[0:idx])
+            w2,_ := conn.Write([]byte("Host"))
+            w3,_ := conn.Write(httpHdr[idx+4:sz1])
+            log.Printf("Read: %d / Write: %d,%d,%d (Pos:%d)", sz1, w1, w2, w3, idx)
+        } else {
+            // unknown type of packet. nothing to do.
+        }
+        // END: SNI Censorship bypass code. :)
+        /////////////////////////////////////////////////////////////////////
 	var wg sync.WaitGroup
-	var err2 error
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_, err = io.Copy(c.rwc, conn)
+		sz1, err = io.Copy(c.rwc, conn)
+                log.Printf("conn->c.rwc: %d",sz1)
 	}()
 	go func() {
 		defer wg.Done()
-		_, err2 = io.Copy(conn, c.rwc)
+		sz2, err2 = io.Copy(conn, c.rwc)
+                log.Printf("c.rwc->conn: %d",sz2)
 	}()
 	wg.Wait()
 

@@ -10,6 +10,13 @@ this code support configuration loading.
 * IP mask must be CIDR format like "1.2.3.0/24". If you want allow all client, use CIDR as "0.0.0.0/0"
 * If ID/PW is supplied, use that. or IP restrictions
 
+Additional Feature
+-----
+* HTTPS(SNI) Censorship in korea avoid function.
+    * you can check the code at "socks5/server.go"
+    * Tested 2019-02-19 (SK Broadband, Korea)
+
+
 Installation
 ============
 * if you want to use with windows, use released binary.
@@ -17,6 +24,15 @@ Installation
 ```
 wget https://github.com/ziozzang/socks5-proxy/releases/download/1.0/socks5-proxy && chmod +x socks5-proxy
 wget https://github.com/ziozzang/socks5-proxy/releases/download/1.0/socks5-proxy.config
+```
+
+or you can run with docker. :)
+
+```
+
+docker build -t socks5proxy .
+docker run --rm -it -v `pwd`/socks5-proxy.config:/app/socks5-proxy.config --net=host socks5proxy
+
 ```
 
 * don't forget to edit configuration.
