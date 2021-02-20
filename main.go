@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./socks5"
+	"socks5"
 	"net"
 	"container/list"
 	"encoding/json"
