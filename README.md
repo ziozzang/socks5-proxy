@@ -16,6 +16,12 @@ Additional Feature
     * you can check the code at "socks5/server.go"
     * Tested 2019-02-19 (SK Broadband, Korea)
 
+* IPv6 Support
+    * Some ISP only support IPv6 connection environment (Ex: Mobile phone tethering). and this proxy can support that.
+    * tested OK. (2021-03-13 / SK telecomm, iPhone + Macbook Tethering, Korea)
+
+* Can be run as Cascade/Upstream Proxy.
+    * You can setup with Adguard or some program. and works well :)
 
 Installation
 ============
@@ -23,8 +29,9 @@ Installation
 * if you want to use with linux(x86_64), just execute these command in console.
 ```
 wget https://github.com/ziozzang/socks5-proxy/releases/download/1.0/socks5-proxy && chmod +x socks5-proxy
-wget https://github.com/ziozzang/socks5-proxy/releases/download/1.0/socks5-proxy.config
+wget https://github.com/ziozzang/socks5-proxy/releases/download/1.0/socks5-proxy.config.template 
 ```
+
 
 or you can run with docker. :)
 
